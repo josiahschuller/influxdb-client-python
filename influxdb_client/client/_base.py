@@ -480,7 +480,11 @@ class _BaseWriteApi(object):
         elif isinstance(record, dict):
             self._serialize(Point.from_dict(record, write_precision=write_precision, **kwargs),
                             write_precision, payload, **kwargs)
-        elif 'DataFrame' in type(record).__name__:
+        elif 'polars' in str(type(record)):
+            from influxdb_client.client.write.polars_dataframe_serializer import PolarsDataframeSerializer
+            serializer = PolarsDataframeSerializer(record, self._point_settings, write_precision, **kwargs)
+            self._serialize(serializer.serialize(), write_precision, payload, **kwargs)
+        elif 'pandas' in str(type(record)):
             serializer = DataframeSerializer(record, self._point_settings, write_precision, **kwargs)
             self._serialize(serializer.serialize(), write_precision, payload, **kwargs)
         elif hasattr(record, "_asdict"):
