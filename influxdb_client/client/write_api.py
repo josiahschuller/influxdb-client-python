@@ -468,7 +468,17 @@ You can use native asynchronous version of the client:
             self._write_batching(bucket, org, Point.from_dict(data, write_precision=precision, **kwargs),
                                  precision, **kwargs)
 
-        elif 'DataFrame' in type(data).__name__:
+        elif 'polars' in str(type(data)):
+            from influxdb_client.client.write.polars_dataframe_serializer import PolarsDataframeSerializer
+            serializer = PolarsDataframeSerializer(data,
+                                                   self._point_settings, precision,
+                                                   self._write_options.batch_size, **kwargs)
+            for chunk_idx in range(serializer.number_of_chunks):
+                self._write_batching(bucket, org,
+                                     serializer.serialize(chunk_idx),
+                                     precision, **kwargs)
+
+        elif 'pandas' in str(type(data)):
             serializer = DataframeSerializer(data, self._point_settings, precision, self._write_options.batch_size,
                                              **kwargs)
             for chunk_idx in range(serializer.number_of_chunks):
